@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slink</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1 {
+            font-family:Georgia, 'Times New Roman', Times, serif;
+            text-align: center;
+            color: white;
+            background-color: #4CAF50;
+            padding-top: 1.5%;
+            padding-bottom: 1.5%;
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-top: -1.5%;
+        }
+        
+        h2 {
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        input#photo {
+            
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        
+        textarea {
+            width: 93%;
+            max-width: 100%;
+            height: auto;
+            min-height: 50px;
+            resize: none;
+            margin-top: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 87.7%;
+            margin-left: 2.9%;
+            resize: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #addUserMessage, #generateQRMessage, #qrCodeResult {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #qrCodeResult img {
+            max-width: 200px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        #main-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #qrCodeContainer {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .qr-download-btn {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .qr-download-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Slink</h1>
+    <div id="main-container">
+        <h2>Add User & Generate QR Code</h2>
+        <form id="addUserForm" enctype="multipart/form-data">
+            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="text" id="phone" name="phone" placeholder="Phone Number" required>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+            <input type="url" id="website" name="website" placeholder="Website (optional)">
+            <textarea id="address" name="address" placeholder=" Physical Address (optional)"></textarea>
+            <input type="text" id="jobTitle" name="jobTitle" placeholder="Job Title" required>
+            <fieldset>
+                <legend>Social Media Handles</legend>
+                <input type="text" id="xHandle" name="xHandle" placeholder="X Handle">
+                <input type="text" id="instagramHandle" name="instagramHandle" placeholder="Instagram Handle">
+                <input type="text" id="facebookHandle" name="facebookHandle" placeholder="Facebook Handle">
+            </fieldset>
+            <label for="photo"><br>Upload Photo (optional):</label>
+            <input type="file" id="photo" name="photo" accept="image/*"><br>
+            <button type="submit">Add User & Generate QR Code</button>
+            <p id="addUserMessage"></p>
+        </form>
+        <div id="qrCodeContainer">
+            <h3>QR Code Result</h3>
+            <div id="qrCodeResult"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const addUserForm = document.getElementById('addUserForm');
+        const addUserMessage = document.getElementById('addUserMessage');
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        const qrCodeResult = document.getElementById('qrCodeResult');
+        const generateQRForm = document.getElementById('generateQRForm');
+        const generateQRMessage = document.getElementById('generateQRMessage');
+
+        // Add User and Generate QR Code
+        addUserForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(addUserForm);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/add_user', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const userId = data.user_id;
+                    const accessToken = data.access_token;
+
+                    addUserMessage.innerHTML = `User added successfully!<br><br>
+                    <b>Your User ID:</b> ${userId}<br><br>
+                    <b>Access Token:</b> ${accessToken} <br>
+                    Ensure your Access Token is kept secret!`;
+                    addUserMessage.style.color = 'green';
+                    
+
+                    // Display the QR Code
+                    qrCodeContainer.style.display = 'block';
+                    qrCodeResult.textContent = 'Generating QR Code, please wait...';
+
+                    const qrResponse = await fetch(`http://127.0.0.1:5000/generate_qr/${userId}`);
+                    if (qrResponse.ok) {
+                        const blob = await qrResponse.blob();
+                        const qrUrl = URL.createObjectURL(blob);
+
+                        qrCodeResult.innerHTML = `
+                            <img src="${qrUrl}" alt="QR Code"><br>
+                            <a href="${qrUrl}" download="qr_code.png" class="qr-download-btn">Download QR Code</a>
+                        `;
+                    } else {
+                        qrCodeResult.textContent = 'Failed to generate QR Code.';
+                    }
+                } else {
+                    const errorData = await response.json();
+                    addUserMessage.textContent = errorData.error || 'Failed to add user.';
+                    addUserMessage.style.color = 'red';
+                }
+            } catch (error) {
+                addUserMessage.textContent = `Error: ${error.message}`;
+                addUserMessage.style.color = 'red';
+            }
+        });    
+        
+    </script>
+</body>
+</html>

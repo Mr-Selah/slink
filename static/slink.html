@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slink - User Details</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #eaeaea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #888;
+            margin: 0 auto 20px;
+            overflow: hidden;
+        }
+
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 8px 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .details {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .details p {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin: 6px 0;
+        }
+
+        .details p span {
+            margin-right: 10px;
+            color: #4CAF50;
+            font-size: 18px;
+        }
+
+        .social-media {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .social-media a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-size: 20px;
+        }
+
+        .social-media a:hover {
+            color: #45a049;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="profile-photo" id="profilePhoto">
+            No Photo
+        </div>
+        <h1 id="userName">Loading...</h1>
+        <p id="jobTitle">Loading...</p>
+        <div class="details">
+            <p><span>&#x2709;</span> <span id="email">Loading...</span></p>
+            <p><span>&#x260E;</span> <span id="phone">Loading...</span></p>
+            <p><span>&#x1F310;</span> <a href="#" id="website">Loading...</a></p>
+            <p><span>&#x1F4CD;</span> <span id="address">Loading...</span></p>
+        </div>
+        <div class="social-media" id="socialMedia">
+            <a href="#" id="xHandle" style="display: none;">&#x1F426; X</a>
+            <a href="#" id="instagramHandle" style="display: none;">&#x1F33F; Instagram</a>
+            <a href="#" id="facebookHandle" style="display: none;">&#x1F465; Facebook</a>
+        </div>
+        <footer>
+            <br><a href="#" id="editLink" style="color: #4CAF50; text-decoration: none;">Edit Your Details</a>
+            <br><br> Powered by Slink
+        </footer>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        async function loadUserDetails() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('userName').textContent = data.username || 'N/A';
+                    document.getElementById('jobTitle').textContent = data.job_title || 'N/A';
+                    document.getElementById('email').textContent = data.email || 'N/A';
+                    document.getElementById('phone').textContent = data.phone || 'N/A';
+                    document.getElementById('website').textContent = data.website || 'Not Available';
+                    document.getElementById('website').href = data.website || '#';
+                    document.getElementById('address').textContent = data.address || 'Not Available';
+
+                    // Social Media Handles
+                    if (data.x_handle) {
+                        document.getElementById('xHandle').href = `https://x.com/${data.x_handle}`;
+                        document.getElementById('xHandle').style.display = 'inline';
+                    }
+                    if (data.instagram_handle) {
+                        document.getElementById('instagramHandle').href = `https://instagram.com/${data.instagram_handle}`;
+                        document.getElementById('instagramHandle').style.display = 'inline';
+                    }
+                    if (data.facebook_handle) {
+                        document.getElementById('facebookHandle').href = `https://facebook.com/${data.facebook_handle}`;
+                        document.getElementById('facebookHandle').style.display = 'inline';
+                    }
+
+                    // Display Photo
+                    if (data.photo_url) {
+                        const photo = document.getElementById('profilePhoto');
+                        photo.innerHTML = `<img src="${data.photo_url}" alt="User Photo">`;
+                    }
+                } else {
+                    document.body.innerHTML = `<h1 style="color: red;">User not found!</h1>`;
+                }
+            } catch (error) {
+                console.error('Error loading user details:', error);
+            }
+        }
+
+        loadUserDetails();
+
+        // Edit Link with Access Token
+        async function updateEditLink() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('editLink').href = `edit.html?id=${userId}&token=${data.access_token}`;
+                } else {
+                    document.getElementById('editLink').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error updating edit link:', error);
+            }
+        }
+
+        updateEditLink();
+    </script>
+</body>
+</html>
+
+
+

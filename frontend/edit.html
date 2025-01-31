@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Your Details - Slink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease-in-out;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        button:hover {
+            background-color: #388E3C;
+        }
+
+        #editMessage {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Your Details</h1>
+        <form id="editForm" enctype="multipart/form-data">
+            <input type="hidden" id="userId" name="user_id">
+            <label for="accessToken">Access Token (Required):</label>
+            <input type="text" id="accessToken" name="access_token" placeholder="Enter your access token" required>
+
+            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="text" id="phone" name="phone" placeholder="Phone Number" required>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+            <input type="url" id="website" name="website" placeholder="Website">
+            <textarea id="address" name="address" placeholder="Physical Address"></textarea>
+            <input type="text" id="jobTitle" name="jobTitle" placeholder="Job Title" required>
+
+            <fieldset>
+                <legend>Social Media Handles</legend>
+                <input type="text" id="xHandle" name="xHandle" placeholder="X Handle">
+                <input type="text" id="instagramHandle" name="instagramHandle" placeholder="Instagram Handle">
+                <input type="text" id="facebookHandle" name="facebookHandle" placeholder="Facebook Handle">
+            </fieldset>
+
+            <label for="photo">Update Photo:</label>
+            <input type="file" id="photo" name="photo" accept="image/*">
+
+            <button type="submit">Save Changes</button>
+            <p id="editMessage"></p>
+        </form>
+    </div>
+
+    <script>
+        const editForm = document.getElementById('editForm');
+        const editMessage = document.getElementById('editMessage');
+
+        // Get user ID and token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        if (!userId) {
+            document.body.innerHTML = `<h1 style="color: red;">Invalid access! No user ID found.</h1>`;
+            throw new Error("Access denied: No user ID provided.");
+        }
+
+        // Populate form with user details
+        async function loadUserDetailsForEdit() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('userId').value = userId;
+                    document.getElementById('username').value = data.username || '';
+                    document.getElementById('phone').value = data.phone || '';
+                    document.getElementById('email').value = data.email || '';
+                    document.getElementById('website').value = data.website || '';
+                    document.getElementById('address').value = data.address || '';
+                    document.getElementById('jobTitle').value = data.job_title || '';
+                    document.getElementById('xHandle').value = data.x_handle || '';
+                    document.getElementById('instagramHandle').value = data.instagram_handle || '';
+                    document.getElementById('facebookHandle').value = data.facebook_handle || '';
+                } else {
+                    document.body.innerHTML = `<h1 style="color: red;">User not found!</h1>`;
+                }
+            } catch (error) {
+                console.error('Error loading user details:', error);
+            }
+        }
+
+        // Save updated user details
+        editForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(editForm);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/edit_user', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    editMessage.textContent = 'Details updated successfully!';
+                    editMessage.style.color = 'green';
+                } else {
+                    const errorData = await response.json();
+                    editMessage.textContent = errorData.error || 'Failed to update details.';
+                    editMessage.style.color = 'red';
+                }
+            } catch (error) {
+                editMessage.textContent = `Error: ${error.message}`;
+                editMessage.style.color = 'red';
+            }
+        });
+
+        loadUserDetailsForEdit();
+    </script>
+</body>
+</html>
+
+
+
