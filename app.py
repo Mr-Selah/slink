@@ -7,6 +7,18 @@ from flask_cors import CORS
 import random
 import string
 from werkzeug.utils import secure_filename
+import sqlalchemy 
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+
+
+#Get the connection string from Supabase
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+#Create SQLAlchemy engine
+engine = create_engine(DATBASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
 
 app = Flask(__name__, static_folder='Frontend', static_url_path='')
 CORS(app)
@@ -18,6 +30,8 @@ QR_FOLDER = 'qr_codes'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(QR_FOLDER, exist_ok=True)
 
+def get_db_connection():
+    return engine.connect()
 
 # Function to generate a random access token (6 characters)
 def generate_access_token(length=6):
@@ -69,18 +83,28 @@ def add_user():
         access_token = generate_access_token()
 
         # Insert user into database
-        connection = sqlite3.connect("business_card.db")
-        cursor = connection.cursor()
-        cursor.execute("""
-            INSERT INTO users (name, phone, email, website, address, job_title, x_handle, 
-            instagram_handle, facebook_handle, photo, access_token) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (username, phone, email, website, address, job_title, x_handle,
-              instagram_handle, facebook_handle, photo_path, access_token))
-        user_id = cursor.lastrowid
-        connection.commit()
-        connection.close()
-
+        with get_db_connection() as connection:
+            result =connection.execute(text("""
+                INSERT INTO users (name, phone, email, website, address, job_title, x_handle, 
+                instagram_handle, facebook_handle, photo, access_token)
+                VALUES (:name, :phone, :email, :website, :address, :job_title, :x_handle, 
+                :instagram_handle, :facebook_handle, :photo, :access_token)
+                RETURNING id
+             """), {
+                'name': username,
+                'phone': phone,
+                'email': email,
+                'website': website,
+                'address': address,
+                'job_title': job_title,
+                'x_handle': x_handle, 
+                'instagram_handle': instagram_handle,
+                'facebook_handle': facebook_handle,
+                'photo': photo_path,
+                'access_token': access_token
+            })
+            user_id = result.fetchone()[0]
+        
         return jsonify({"message": "User added successfully!", "user_id": user_id, "access_token": access_token}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
