@@ -32,12 +32,12 @@ def uploaded_photos(filename):
 # Route to serve index.html
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return send_file('Frontend/index.html')
 
 # Route to serve slink.html
 @app.route('/slink')
 def slink():
-    return send_from_directory('Static', 'slink.html')
+    return send_file('Static/slink.html')
 
 # Route to add user details
 @app.route('/add_user', methods=['POST'])
