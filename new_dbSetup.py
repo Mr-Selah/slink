@@ -7,41 +7,37 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 
-def query_database():
+def setup_database():
     try:
         # Establish a connection
         with engine.connect() as connection:
-            # Query 1: Get the schema of the 'users' table
-            print("Schema of 'users' table:")
-            schema_query = text("""
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
-                WHERE table_name = 'users'
-            """)
-            schema_result = connection.execute(schema_query)
-            schema = schema_result.fetchall()
+            # Drop existing 'users' table if it exists
+            connection.execute(text("DROP TABLE IF EXISTS users"))
             
-            if schema:
-                for column in schema:
-                    print(f"{column[0]}: {column[1]}")
-            else:
-                print("No 'users' table found!")
-
-            # Query 2: Select all data from the 'users' table
-            print("\nData in 'users' table:")
-            data_query = text("SELECT * FROM users")
-            rows = connection.execute(data_query)
+            # Create the 'users' table with PostgreSQL syntax
+            connection.execute(text("""
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                email TEXT NOT NULL,
+                website TEXT,
+                address TEXT,
+                job_title TEXT NOT NULL,
+                x_handle TEXT,
+                instagram_handle TEXT,
+                facebook_handle TEXT,
+                photo TEXT,
+                access_token TEXT NOT NULL
+            );
+            """))
             
-            user_data = rows.fetchall()
-            if user_data:
-                for row in user_data:
-                    print(row)
-            else:
-                print("No data found in 'users' table.")
+            print("✅ Database setup completed successfully!")
     
     except Exception as e:
-        print(f"Error reading from database: {e}")
+        print(f"Error setting up database: {e}")
 
-# Run the query if the script is executed directly
+# Run the setup if the script is executed directly
 if __name__ == "__main__":
-    query_database()
+    setup_database()
+
