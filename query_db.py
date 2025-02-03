@@ -1,30 +1,49 @@
-import sqlite3
+from sqlalchemy import create_engine, text
+import os
 
-# Connect to your database
-connection = sqlite3.connect("business_card.db")  # Ensure the database file is in the same folder as this script
-cursor = connection.cursor()
+# Get the database URL from environment variable
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# Query 1: Get the schema of the 'users' table
-print("Schema of 'users' table:")
-cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users';")
-schema = cursor.fetchone()
-if schema:
-    print(schema[0])
-else:
-    print("No 'users' table found!")
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
 
-print("\nData in 'users' table:")
-# Query 2: Select all data from the 'users' table
-try:
-    cursor.execute("SELECT * FROM users;")
-    rows = cursor.fetchall()
-    if rows:
-        for row in rows:
-            print(row)
-    else:
-        print("No data found in 'users' table.")
-except sqlite3.Error as e:
-    print(f"Error reading from database: {e}")
+def query_database():
+    try:
+        # Establish a connection
+        with engine.connect() as connection:
+            # Query 1: Get the schema of the 'users' table
+            print("Schema of 'users' table:")
+            schema_query = text("""
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'users'
+            """)
+            schema_result = connection.execute(schema_query)
+            schema = schema_result.fetchall()
+            
+            if schema:
+                for column in schema:
+                    print(f"{column[0]}: {column[1]}")
+            else:
+                print("No 'users' table found!")
 
-# Close the connection
-connection.close()
+            # Query 2: Select all data from the 'users' table
+            print("\nData in 'users' table:")
+            data_query = text("SELECT * FROM users")
+            rows = connection.execute(data_query)
+            
+            user_data = rows.fetchall()
+            if user_data:
+                for row in user_data:
+                    print(row)
+            else:
+                print("No data found in 'users' table.")
+    
+    except Exception as e:
+        print(f"Error reading from database: {e}")
+
+# Run the query if the script is executed directly
+if __name__ == "__main__":
+    query_database()
+
+
