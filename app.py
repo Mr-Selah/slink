@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 import sqlite3
 import qrcode
 import os
+from os import getenv
 from io import BytesIO
 from flask_cors import CORS
 import random
@@ -10,6 +11,7 @@ from werkzeug.utils import secure_filename
 import sqlalchemy 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
 
 
 #Get the connection string from Supabase
@@ -203,5 +205,6 @@ def get_user(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
