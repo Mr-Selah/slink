@@ -3,3 +3,5 @@ flask-cors
 qrcode
 Pillow
 werkzeug
+psycopg2-binary
+sqlalchemy
