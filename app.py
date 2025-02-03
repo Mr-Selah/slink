@@ -118,43 +118,52 @@ def edit_user():
         access_token = data.get('access_token')
 
         # Validate access token
-        connection = sqlite3.connect("business_card.db")
-        cursor = connection.cursor()
-        cursor.execute("SELECT access_token FROM users WHERE id = ?", (user_id,))
-        result = cursor.fetchone()
-        if not result or result[0] != access_token:
-            connection.close()
-            return jsonify({"error": "Invalid access token!"}), 403
+        with get_db_connection() as connection:
+            result = connection.execute(text("SELECT access_token FROM users WHERE id = :user_id"), 
+                                        {'user_id': user_id})
+            stored_token = result.fetchone()
+            
+            if not stored_token or stored_token[0] != access_token:
+                return jsonify({"error": "Invalid access token!"}), 403
 
-        # Update user details
-        cursor.execute("""
-            UPDATE users SET name = ?, phone = ?, email = ?, website = ?, address = ?, 
-            job_title = ?, x_handle = ?, instagram_handle = ?, facebook_handle = ? WHERE id = ?
-        """, (data.get('username'), data.get('phone'), data.get('email'), data.get('website'),
-              data.get('address'), data.get('jobTitle'), data.get('xHandle'),
-              data.get('instagramHandle'), data.get('facebookHandle'), user_id))
-        connection.commit()
-        connection.close()
+            # Update user details
+            connection.execute(text("""
+                UPDATE users SET name = :username, phone = :phone, email = :email, 
+                website = :website, address = :address, job_title = :job_title, 
+                x_handle = :x_handle, instagram_handle = :instagram_handle, 
+                facebook_handle = :facebook_handle WHERE id = :user_id
+            """), {
+                'username': data.get('username'),
+                'phone': data.get('phone'),
+                'email': data.get('email'),
+                'website': data.get('website'),
+                'address': data.get('address'),
+                'job_title': data.get('jobTitle'),
+                'x_handle': data.get('xHandle'),
+                'instagram_handle': data.get('instagramHandle'),
+                'facebook_handle': data.get('facebookHandle'),
+                'user_id': user_id
+            })
 
         return jsonify({"message": "User updated successfully!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+
 # Generate QR Code API
 @app.route('/generate_qr/<int:user_id>', methods=['GET'])
 def generate_qr(user_id):
     try:
-        connection = sqlite3.connect("business_card.db")
-        cursor = connection.cursor()
-        cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
-        user = cursor.fetchone()
-        connection.close()
+        with get_db_connection() as connection:
+            result = connection.execute(text("SELECT id FROM users WHERE id = :user_id"), 
+                                        {'user_id': user_id})
+            user = result.fetchone()
 
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        qr_url = f"http://127.0.0.1:5000/slink?id={user_id}"
+        qr_url = f"https://your-vercel-domain.vercel.app/slink?id={user_id}"  # Update with your actual domain
         qr = qrcode.make(qr_url)
 
         qr_path = os.path.join(QR_FOLDER, f"user_{user_id}.png")
@@ -164,16 +173,14 @@ def generate_qr(user_id):
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-
 # Route to fetch user details
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     try:
-        connection = sqlite3.connect("business_card.db")
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        user = cursor.fetchone()
-        connection.close()
+        with get_db_connection() as connection:
+            result = connection.execute(text("SELECT * FROM users WHERE id = :user_id"), 
+                                        {'user_id': user_id})
+            user = result.fetchone()
 
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -188,7 +195,7 @@ def get_user(user_id):
             "x_handle": user[7],
             "instagram_handle": user[8],
             "facebook_handle": user[9],
-            "photo_url": f"http://127.0.0.1:5000/{user[10]}" if user[10] else None,
+            "photo_url": f"https://your-vercel-domain.vercel.app/{user[10]}" if user[10] else None,
             "access_token": user[11]
         }
 
@@ -198,5 +205,3 @@ def get_user(user_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
-    
