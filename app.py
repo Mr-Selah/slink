@@ -18,7 +18,7 @@ from sqlalchemy.orm import sessionmaker
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 #Create SQLAlchemy engine
-engine = create_engine(DATBASE_URL)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
