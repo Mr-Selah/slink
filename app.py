@@ -10,7 +10,12 @@ import string
 from werkzeug.utils import secure_filename
 import sqlalchemy 
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass
+
 
 
 
@@ -20,7 +25,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 #Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
+
 
 app = Flask(__name__, static_folder='Frontend', static_url_path='')
 CORS(app)
