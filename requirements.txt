@@ -5,4 +5,3 @@ Pillow
 werkzeug
 psycopg2-binary
 sqlalchemy
-flask-sqlalchemy
