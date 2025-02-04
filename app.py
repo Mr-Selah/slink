@@ -9,10 +9,18 @@ import random
 import string
 from werkzeug.utils import secure_filename
 import sqlalchemy 
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import sessionmaker, registry
 from sqlalchemy.orm import declarative_base
-Base = declarative_base()
+mapper_registry = registry()
+
+class User:
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+mapper_registry.map_imperatively(User, User.__dict__)
+
 
 #Get the connection string from Supabase
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -20,6 +28,9 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 #Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
+session = Session()
+
+
 
 
 app = Flask(__name__, static_folder='Frontend', static_url_path='')
