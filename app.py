@@ -14,10 +14,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
-
-
-
-
 #Get the connection string from Supabase
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
