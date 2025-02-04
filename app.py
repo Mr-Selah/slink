@@ -10,7 +10,7 @@ import string
 from werkzeug.utils import secure_filename
 import sqlalchemy 
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 
 
